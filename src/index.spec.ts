@@ -1,35 +1,35 @@
 import * as testFunctions from './index'
-// import localData from './data/records.json'
+import localData from './data/records.json'
 import importedItems from './data/importedItems.json'
 
-// describe('Test returnSiteTitles', () => {
-//   it('should return the proper site titles', async () => {
-//     const titles = await testFunctions.returnSiteTitles()
+describe('Test returnSiteTitles', () => {
+  it('should return the proper site titles', async () => {
+    const titles = await testFunctions.returnSiteTitles()
 
-//     expect(titles).toHaveLength(4)
+    expect(titles).toHaveLength(4)
 
-//     expect(titles[0]).toBe('PatientStudio - Integrated EMR, Practice Management and Billing Software')
-//     expect(titles[1]).toBe('Star Trek (Official Site)')
-//     expect(titles[2]).toBe('StarWars.com | The Official Star Wars Website')
-//     expect(titles[3]).toBe('Tech News, Reviews & Betas | Neowin')
-//   })
-// })
+    expect(titles[0]).toBe('PatientStudio - Integrated EMR, Practice Management and Billing Software')
+    expect(titles[1]).toBe('Star Trek (Official Site)')
+    expect(titles[2]).toBe('StarWars.com | The Official Star Wars Website')
+    expect(titles[3]).toBe('Tech News, Reviews & Betas | Neowin')
+  })
+})
 
-// describe('Test findTagCounts', () => {
-//   it('should count the correct number of tag occurrences', () => {
-//     const tagCounts = testFunctions.findTagCounts(localData)
+describe('Test findTagCounts', () => {
+  it('should count the correct number of tag occurrences', () => {
+    const tagCounts = testFunctions.findTagCounts(localData)
 
-//     expect(tagCounts).toHaveLength(62)
+    expect(tagCounts).toHaveLength(62)
 
-//     const test1 = tagCounts.find(tagCount => tagCount.tag === 'occaecat')
-//     const test2 = tagCounts.find(tagCount => tagCount.tag === 'cupidatat')
-//     const test3 = tagCounts.find(tagCount => tagCount.tag === 'velit')
+    const test1 = tagCounts.find(tagCount => tagCount.tag === 'occaecat')
+    const test2 = tagCounts.find(tagCount => tagCount.tag === 'cupidatat')
+    const test3 = tagCounts.find(tagCount => tagCount.tag === 'velit')
 
-//     expect((test1 as TagCounts).count).toBe(6)
-//     expect((test2 as TagCounts).count).toBe(5)
-//     expect((test3 as TagCounts).count).toBe(1)
-//   })
-// })
+    expect((test1 as TagCounts).count).toBe(6)
+    expect((test2 as TagCounts).count).toBe(5)
+    expect((test3 as TagCounts).count).toBe(1)
+  })
+})
 
 describe('Test calculatePriceWithTaxes', () => {
   it('should return results in the correct format', () => {

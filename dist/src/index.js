@@ -8,17 +8,25 @@ export async function returnSiteTitles() {
         'https://www.neowin.net/'
     ];
     const titles = [];
-    for (const url of urls) {
-        const response = await fetch(url, { method: 'GET' });
-        if (response.status === 200) {
-            const data = await response.text();
-            const match = data.match(/<title>(.*?)<\/title>/);
-            if (match === null || match === void 0 ? void 0 : match.length) {
-                titles.push(match[1]);
+    await Promise.allSettled(urls.map(fetchSite)).then(responses => {
+        for (let index = 0; index < responses.length; index++) {
+            const element = responses[index];
+            if (element.status == 'fulfilled') {
+                const match = element.value.match(/<title>(.*?)<\/title>/);
+                if (match === null || match === void 0 ? void 0 : match.length) {
+                    titles.push(match[1]);
+                }
             }
         }
-    }
+    });
     return titles;
+}
+async function fetchSite(url) {
+    const res = await fetch(url);
+    if (!res.ok) {
+        throw new Error('Could not connect');
+    }
+    return res.text();
 }
 export function findTagCounts(localData) {
     const tagCounts = [];
@@ -42,6 +50,22 @@ export function findTagCounts(localData) {
     return tagCounts;
 }
 export function calcualteImportCost(importedItems) {
-    console.log(importedItems, taxRates);
-    return [];
+    const importCosts = importedItems.map(importedItem => {
+        const importTaxRate = calculateImportTaxRate(importedItem.countryDestination, importedItem.category);
+        const importCost = importedItem.unitPrice * importedItem.quantity * importTaxRate;
+        const subtotal = importedItem.unitPrice * importedItem.quantity;
+        const totalCost = importCost + subtotal;
+        return { name: importedItem.name, totalCost, importCost, subtotal };
+    });
+    return importCosts;
+}
+function calculateImportTaxRate(destinationCountry, category) {
+    const country = taxRates.find(item => item.country === destinationCountry);
+    if (country === undefined) {
+        throw new Error('Country not found');
+    }
+    if (country.categoryExceptions.includes(category)) {
+        return 0;
+    }
+    return country.importTaxRate;
 }

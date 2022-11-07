@@ -19,21 +19,31 @@ export async function returnSiteTitles() {
     'https://www.neowin.net/'
   ]
 
-  const titles = []
+  const titles: string[] = []
 
-  for (const url of urls) {
-    const response = await fetch(url, { method: 'GET' })
+  await Promise.allSettled(urls.map(fetchSite)).then(responses => {
+    for (let index = 0; index < responses.length; index++) {
+      const element = responses[index]
 
-    if (response.status === 200) {
-      const data = await response.text()
-      const match = data.match(/<title>(.*?)<\/title>/)
-      if (match?.length) {
-        titles.push(match[1])
+      if (element.status == 'fulfilled') {
+        const match = element.value.match(/<title>(.*?)<\/title>/)
+        if (match?.length) {
+          titles.push(match[1])
+        }
       }
     }
-  }
+  })
 
   return titles
+}
+
+async function fetchSite(url: string) {
+  const res = await fetch(url) // "GET" is the default method
+  if (!res.ok) {
+    throw new Error('Could not connect')
+  }
+
+  return res.text()
 }
 
 /**
@@ -85,7 +95,30 @@ export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCoun
  */
 export function calcualteImportCost(importedItems: Array<ImportedItem>): Array<ImportCostOutput> {
   // please write your code in here.
-  console.log(importedItems, taxRates)
-  return []
+
+  const importCosts = importedItems.map(importedItem => {
+    const importTaxRate = calculateImportTaxRate(importedItem.countryDestination, importedItem.category)
+    const importCost = importedItem.unitPrice * importedItem.quantity * importTaxRate
+    const subtotal = importedItem.unitPrice * importedItem.quantity
+    const totalCost = importCost + subtotal
+    return { name: importedItem.name, totalCost, importCost, subtotal }
+  })
+
+  return importCosts
   // note that `taxRate` has already been imported for you
+}
+
+function calculateImportTaxRate(destinationCountry: string, category: string): number {
+  const country = taxRates.find(item => item.country === destinationCountry)
+
+  // if undefined throw an error
+  if (country === undefined) {
+    throw new Error('Country not found')
+  }
+  // if there zero
+  if (country.categoryExceptions.includes(category)) {
+    return 0
+  }
+
+  return country.importTaxRate
 }
