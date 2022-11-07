@@ -1,6 +1,4 @@
-import { count } from 'console'
 import fetch from 'cross-fetch'
-import { KeyObjectType } from 'crypto'
 import taxRates from './data/taxRate.json'
 
 /**
@@ -37,12 +35,20 @@ export async function returnSiteTitles() {
   return titles
 }
 
-async function fetchSite(url: string) {
+/**
+ * Fetch the given url
+ *
+ *
+ *
+ *
+ * @param url string
+ * @returns string promise
+ */
+async function fetchSite(url: string): Promise<string> {
   const res = await fetch(url) // "GET" is the default method
   if (!res.ok) {
     throw new Error('Could not connect')
   }
-
   return res.text()
 }
 
@@ -108,6 +114,16 @@ export function calcualteImportCost(importedItems: Array<ImportedItem>): Array<I
   // note that `taxRate` has already been imported for you
 }
 
+/**
+ * calculate the import tax Rate
+ *
+ *
+ *
+ *
+ * @param destinationCountry string
+ * @param category string
+ * @returns number
+ */
 function calculateImportTaxRate(destinationCountry: string, category: string): number {
   const country = taxRates.find(item => item.country === destinationCountry)
 
@@ -115,7 +131,7 @@ function calculateImportTaxRate(destinationCountry: string, category: string): n
   if (country === undefined) {
     throw new Error('Country not found')
   }
-  // if there zero
+
   if (country.categoryExceptions.includes(category)) {
     return 0
   }
