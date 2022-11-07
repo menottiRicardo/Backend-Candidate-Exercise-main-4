@@ -17,21 +17,39 @@ export async function returnSiteTitles() {
     'https://www.neowin.net/'
   ]
 
-  const titles = []
+  const titles: string[] = []
 
-  for (const url of urls) {
-    const response = await fetch(url, { method: 'GET' })
+  await Promise.allSettled(urls.map(fetchSite)).then(responses => {
+    for (let index = 0; index < responses.length; index++) {
+      const element = responses[index]
 
-    if (response.status === 200) {
-      const data = await response.text()
-      const match = data.match(/<title>(.*?)<\/title>/)
-      if (match?.length) {
-        titles.push(match[1])
+      if (element.status == 'fulfilled') {
+        const match = element.value.match(/<title>(.*?)<\/title>/)
+        if (match?.length) {
+          titles.push(match[1])
+        }
       }
     }
-  }
+  })
 
   return titles
+}
+
+/**
+ * Fetch the given url
+ *
+ *
+ *
+ *
+ * @param url string
+ * @returns string promise
+ */
+async function fetchSite(url: string): Promise<string> {
+  const res = await fetch(url) // "GET" is the default method
+  if (!res.ok) {
+    throw new Error('Could not connect')
+  }
+  return res.text()
 }
 
 /**
@@ -45,6 +63,10 @@ export async function returnSiteTitles() {
  */
 export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCounts> {
   const tagCounts: Array<TagCounts> = []
+  // this object is to keep track of the count
+  const tagDic: Record<string, number> = {}
+  // this object is to keep the index of the object which is saved
+  const indexDic: Record<string, number> = {}
 
   for (let i = 0; i < localData.length; i++) {
     const tags = localData[i].tags
@@ -52,16 +74,16 @@ export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCoun
     for (let j = 0; j < tags.length; j++) {
       const tag = tags[j]
 
-      for (let k = 0; k < tagCounts.length; k++) {
-        if (tagCounts[k].tag === tag) {
-          tagCounts[k].count++
-        } else {
-          tagCounts.push({ tag, count: 1 })
-        }
+      if (tag in tagDic) {
+        tagDic[tag] += 1
+        tagCounts[indexDic[tag]] = { tag, count: tagDic[tag] }
+      } else {
+        tagDic[tag] = 1
+        indexDic[tag] = tagCounts.length
+        tagCounts.push({ tag, count: 1 })
       }
     }
   }
-
   return tagCounts
 }
 
@@ -79,5 +101,40 @@ export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCoun
  */
 export function calcualteImportCost(importedItems: Array<ImportedItem>): Array<ImportCostOutput> {
   // please write your code in here.
+
+  const importCosts = importedItems.map(importedItem => {
+    const importTaxRate = calculateImportTaxRate(importedItem.countryDestination, importedItem.category)
+    const importCost = importedItem.unitPrice * importedItem.quantity * importTaxRate
+    const subtotal = importedItem.unitPrice * importedItem.quantity
+    const totalCost = importCost + subtotal
+    return { name: importedItem.name, totalCost, importCost, subtotal }
+  })
+
+  return importCosts
   // note that `taxRate` has already been imported for you
+}
+
+/**
+ * calculate the import tax Rate
+ *
+ *
+ *
+ *
+ * @param destinationCountry string
+ * @param category string
+ * @returns number
+ */
+function calculateImportTaxRate(destinationCountry: string, category: string): number {
+  const country = taxRates.find(item => item.country === destinationCountry)
+
+  // if undefined throw an error
+  if (country === undefined) {
+    throw new Error('Country not found')
+  }
+
+  if (country.categoryExceptions.includes(category)) {
+    return 0
+  }
+
+  return country.importTaxRate
 }
