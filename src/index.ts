@@ -1,4 +1,6 @@
+import { count } from 'console'
 import fetch from 'cross-fetch'
+import { KeyObjectType } from 'crypto'
 import taxRates from './data/taxRate.json'
 
 /**
@@ -45,6 +47,10 @@ export async function returnSiteTitles() {
  */
 export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCounts> {
   const tagCounts: Array<TagCounts> = []
+  // this object is to keep track of the count
+  const tagDic: Record<string, number> = {}
+  // this object is to keep the index of the object which is saved
+  const indexDic: Record<string, number> = {}
 
   for (let i = 0; i < localData.length; i++) {
     const tags = localData[i].tags
@@ -52,16 +58,16 @@ export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCoun
     for (let j = 0; j < tags.length; j++) {
       const tag = tags[j]
 
-      for (let k = 0; k < tagCounts.length; k++) {
-        if (tagCounts[k].tag === tag) {
-          tagCounts[k].count++
-        } else {
-          tagCounts.push({ tag, count: 1 })
-        }
+      if (tag in tagDic) {
+        tagDic[tag] += 1
+        tagCounts[indexDic[tag]] = { tag, count: tagDic[tag] }
+      } else {
+        tagDic[tag] = 1
+        indexDic[tag] = tagCounts.length
+        tagCounts.push({ tag, count: 1 })
       }
     }
   }
-
   return tagCounts
 }
 
@@ -79,5 +85,7 @@ export function findTagCounts(localData: Array<SampleDateRecord>): Array<TagCoun
  */
 export function calcualteImportCost(importedItems: Array<ImportedItem>): Array<ImportCostOutput> {
   // please write your code in here.
+  console.log(importedItems, taxRates)
+  return []
   // note that `taxRate` has already been imported for you
 }
